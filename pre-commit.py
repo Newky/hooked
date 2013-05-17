@@ -15,9 +15,7 @@ def get_staged_files():
     return [ f for f in files if f ]
 
 
-git_state = {}
-
-git_state["files"] = get_staged_files()
+git_state = {"files": get_staged_files()}
 
 hook_results = run(PHASE, git_state)
 
