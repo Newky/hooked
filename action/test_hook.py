@@ -1,2 +1,3 @@
-def hook(git_commit):
-    print "Hello, Hook"
+def precommit(git_state):
+    print git_state["files"]
+    return True
