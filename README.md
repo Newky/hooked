@@ -42,5 +42,6 @@ In order to write a git hook now, all that you have to do is write a new (or exi
 This will be picked up by action.run() and will be run on every commit at that phase. Before you write your git hook, make sure that the relevant phase has a corresponding action file in the root directory, for example at time of writing the following have been defined:
 
 - pre-commit.py
+- prepare-commit-msg.py
 
 If the phase you want is there, it should be trivial to implement a different one and pass in the state you want. Pull requests are welcome.

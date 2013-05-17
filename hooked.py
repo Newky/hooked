@@ -6,7 +6,7 @@ import stat
 from optparse import OptionParser
 
 
-GIT_HOOKS = ["pre-commit.py"]
+GIT_HOOKS = ["pre-commit.py", "prepare-commit-msg.py"]
 
 def fail(msg):
         print msg
