@@ -9,8 +9,8 @@ from optparse import OptionParser
 GIT_HOOKS = ["pre-commit.py", "prepare-commit-msg.py"]
 
 def fail(msg):
-        print msg
-        sys.exit(1)
+    print msg
+    sys.exit(1)
 
 
 def get_action_directory():
@@ -62,7 +62,14 @@ def get_git_path(options):
         fail("git root does not exist")
 
 
-if __name__ == "__main__":
+def check_command_line_arguments(options):
+    mandatory = ["gitroot"]
+    for field in mandatory:
+        if not getattr(options, field, False):
+            raise Exception("%s is a mandatory argument" % field)
+
+
+def get_command_line_arguments():
     usage = "%prog [options]"
     parser = OptionParser(usage=usage)
     parser.add_option("--git-root", dest='gitroot',
@@ -70,7 +77,13 @@ if __name__ == "__main__":
                 'to inject hook'))
     parser.add_option("--clean", dest='clean', action='store_true',
             default=False, help=('Clean up after yourself'))
-    (options, args) = parser.parse_args()
+    (options, _) = parser.parse_args()
+    return options
+
+
+if __name__ == "__main__":
+    options = get_command_line_arguments()
+    check_command_line_arguments(options)
     if options.clean:
         clean_up_dotgit(options)
     else:
