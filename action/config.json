@@ -1,1 +1,1 @@
-{ "hooks": ["test_hook", "other_hook"] }
+{ "hooks": [] }

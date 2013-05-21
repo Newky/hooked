@@ -15,7 +15,8 @@ def get_config():
 
 def run(phase, git_state):
     config = get_config()
-    results = []
+    # if no hooks, the tests should pass
+    results = [True]
     for hook in config:
         hook_obj = importlib.import_module('%s.%s' % (__name__, hook))
         hook_func = getattr(hook_obj, phase, None)
