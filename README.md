@@ -6,6 +6,9 @@ Introduction
 
 This python module allows for a nice pluginable system for git hooks. It is meant to be easily extendable.
 
+An article on how to write a new git hook:
+<a href="http://richydelaney.com/snippets/hooked---my-new-python-package-for-managing-git-hooks.html">Manage your git hooks</a>
+
 First lets familiarize ourselves with the relevant files:
 
 __hooked/hooked.py:__
