@@ -6,7 +6,7 @@ import stat
 from optparse import OptionParser
 
 
-GIT_HOOKS = ["pre-commit.py", "prepare-commit-msg.py"]
+GIT_HOOKS = ["pre-commit.py", "prepare-commit-msg.py", "commit-msg.py"]
 
 def fail(msg):
     print msg
@@ -21,7 +21,9 @@ def clean_up_dotgit(options):
     git_hook_path = get_git_path(options)
     for hook in GIT_HOOKS:
         git_hook_name = git_hook_rename(hook)
-        os.remove(os.path.join(git_hook_path, git_hook_name))
+        hook_path = os.path.join(git_hook_path, git_hook_name)
+        if os.path.exists(hook_path):
+            os.remove(hook_path)
     shutil.rmtree(os.path.join(git_hook_path, "action"))
 
 
