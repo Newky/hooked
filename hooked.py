@@ -8,6 +8,7 @@ from optparse import OptionParser
 
 GIT_HOOKS = ["pre-commit.py", "prepare-commit-msg.py", "commit-msg.py"]
 
+
 def fail(msg):
     print msg
     sys.exit(1)
@@ -41,6 +42,9 @@ def copy_git_hooks_to_dotgit(options):
     for hook in GIT_HOOKS:
         git_hook_name = git_hook_rename(hook)
         git_hook_full_path = os.path.join(git_hook_path, git_hook_name)
+        if os.path.exists(git_hook_full_path):
+            backup_path = git_hook_full_path + ".bak"
+            shutil.copy(git_hook_full_path, backup_path)
         shutil.copy(hook, git_hook_full_path)
         make_executable(git_hook_full_path)
 
