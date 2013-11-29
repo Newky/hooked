@@ -70,25 +70,38 @@ def get_git_path(options):
         fail("git root does not exist")
 
 
-def find_file_root(filename):
+def find_file_root(full_filename):
+    filename = os.path.basename(full_filename)
     return filename[:filename.rfind(".py")]
 
 
 def inject_file(options):
+    if not os.path.exists(options.injectlocation):
+        fail("location to inject does not exist")
+
+    if os.path.isfile(options.injectlocation):
+        files = [options.injectlocation]
+    elif os.path.isdir(options.injectlocation):
+        for dirname, _, files in os.walk(options.injectlocation):
+            if dirname == options.injectlocation:
+                break
+        files = [os.path.join(options.injectlocation, f)
+                for f in files
+                if f.endswith(".py")]
+
     git_hook_path = get_git_path(options)
     action_path = os.path.join(git_hook_path, "action/")
     action_config_filename = os.path.join(action_path, "config.json")
     config = {}
 
-    if not os.path.exists(options.filetoinject):
-        fail("file to inject does not exist")
-
-    shutil.copy(options.filetoinject, action_path)
+    for fname in files:
+        shutil.copy(fname, action_path)
 
     with open(action_config_filename, "r") as action_config_file:
         config = json.load(action_config_file)
 
-    config["hooks"].append(find_file_root(options.filetoinject))
+    for fname in files:
+        config["hooks"].append(find_file_root(fname))
 
     with open(action_config_filename, "w") as action_config_file:
         json.dump(config, action_config_file)
@@ -104,7 +117,7 @@ def check_command_line_arguments(options):
 def get_command_line_arguments():
     usage = "%prog [options]"
     parser = OptionParser(usage=usage)
-    parser.add_option("--inject", dest='filetoinject',
+    parser.add_option("--inject", dest='injectlocation',
             help=('takes the filename to inject and add to the config'))
     parser.add_option("--git-root", dest='gitroot',
             help=('the root directory of the git folder '
@@ -120,7 +133,7 @@ if __name__ == "__main__":
     check_command_line_arguments(options)
     if options.clean:
         clean_up_dotgit(options)
-    elif options.filetoinject:
+    elif options.injectlocation:
         inject_file(options)
     else:
         copy_action_dir_to_dotgit(options)
