@@ -1,7 +1,9 @@
 #!/usr/bin/python2.7
+import json
 import os
 import shutil
 import stat
+import sys
 
 from optparse import OptionParser
 
@@ -68,6 +70,30 @@ def get_git_path(options):
         fail("git root does not exist")
 
 
+def find_file_root(filename):
+    return filename[:filename.rfind(".py")]
+
+
+def inject_file(options):
+    git_hook_path = get_git_path(options)
+    action_path = os.path.join(git_hook_path, "action/")
+    action_config_filename = os.path.join(action_path, "config.json")
+    config = {}
+
+    if not os.path.exists(options.filetoinject):
+        fail("file to inject does not exist")
+
+    shutil.copy(options.filetoinject, action_path)
+
+    with open(action_config_filename, "r") as action_config_file:
+        config = json.load(action_config_file)
+
+    config["hooks"].append(find_file_root(options.filetoinject))
+
+    with open(action_config_filename, "w") as action_config_file:
+        json.dump(config, action_config_file)
+
+
 def check_command_line_arguments(options):
     mandatory = ["gitroot"]
     for field in mandatory:
@@ -78,6 +104,8 @@ def check_command_line_arguments(options):
 def get_command_line_arguments():
     usage = "%prog [options]"
     parser = OptionParser(usage=usage)
+    parser.add_option("--inject", dest='filetoinject',
+            help=('takes the filename to inject and add to the config'))
     parser.add_option("--git-root", dest='gitroot',
             help=('the root directory of the git folder '
                 'to inject hook'))
@@ -92,6 +120,8 @@ if __name__ == "__main__":
     check_command_line_arguments(options)
     if options.clean:
         clean_up_dotgit(options)
+    elif options.filetoinject:
+        inject_file(options)
     else:
         copy_action_dir_to_dotgit(options)
         copy_git_hooks_to_dotgit(options)
