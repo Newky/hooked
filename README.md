@@ -1,50 +1,97 @@
 Hooked
 ------
 
-Introduction
-============
-
-This python module allows for a nice pluginable system for git hooks. It is meant to be easily extendable.
-
-An article on how to write a new git hook:
-<a href="http://richydelaney.com/snippets/hooked---my-new-python-package-for-managing-git-hooks.html">Manage your git hooks</a>
-
-First lets familiarize ourselves with the relevant files:
-
-__hooked/hooked.py:__
-
-
-- This is the command line script to inject the git hook files and relevant other files for running git hooks.
-- It also contains a --clean which will clean up damage done. (well, kind of).
-
-__hooked/pre-commit.py:__
-
-
-- This is the first example I have added, this gets copied to the .git/hooks/pre-commit. It basically calls action.run() and passes the relevant phase into this function.
-- It is responsible for passing in a "git\_state", what does this mean? In this case it is the files that will be in this commit, but can be differing things depending on what is relevant at this stage of the commit process.
-
-
-__hooked/action/\_\_init\_\_.py:__
-
-
-- This is where the (bad) magic happens. This exposes a function called run() which takes a phase (just a string, for example "precommit", and takes a relevant git state)
-
-- It then imports all other files in the action directory and grabs any functions named the same as phase variable passed in. Executes these functions using the git state thats passed in.
-- It collects and returns a list of all the return values of the git hooks.
-
-An example pre-commit hook is listed here:
-
-__action/test\_hook.py__
-
-
-Conclusion
+How to use
 ==========
 
-In order to write a git hook now, all that you have to do is write a new (or existing file which doesn't have it defined) python file with a function named after the phase you want (i.e def precommit(git\_state))
+Hooked is a python library for managing git hooks. It adds a plugin system to the git hooks which allow us to write simple python scripts to run for the different phases in git.
 
-This will be picked up by action.run() and will be run on every commit at that phase. Before you write your git hook, make sure that the relevant phase has a corresponding action file in the root directory, for example at time of writing the following have been defined:
+There are 3 different actions that can be done with hooked.py.
 
-- pre-commit.py
-- prepare-commit-msg.py
+To demonstrate lets create a test git directory:
 
-If the phase you want is there, it should be trivial to implement a different one and pass in the state you want. Pull requests are welcome.
+```
+$ mkdir /tmp/testgit
+$ cd /tmp/testgit
+$ git init
+```
+
+None of the hooks are enabled in a normal git directory:
+
+```
+$ ls .git/hooks/
+applypatch-msg.sample  pre-applypatch.sample      pre-rebase.sample
+commit-msg.sample      pre-commit.sample      update.sample
+post-update.sample     prepare-commit-msg.sample
+```
+
+In the hooked directory, we initialize the hooked system for that git repository.
+
+```
+$ python hooked.py --git-root=/tmp/testgit
+```
+
+Now, there is a few additions to the hooks directory:
+
+```
+$ ls .git/hooks/
+action             post-update.sample     prepare-commit-msg
+applypatch-msg.sample  pre-applypatch.sample  prepare-commit-msg.sample
+commit-msg         pre-commit         pre-rebase.sample
+commit-msg.sample      pre-commit.sample      update.sample
+```
+
+At time of writing, hooked.py creates prepare-commit-msg, commit-msg and pre-commit.
+It also creates the action directory.
+
+```
+$ ls .git/hooks/action/
+config.json  __init__.py  other_hook.py  test_hook.py
+```
+
+By default, it includes some example hooks but they are disabled. The config.json is a simple json configuration which lists which hooks are installed. By default, none are installed.
+
+```
+$ cat .git/hooks/action/config.json 
+{ "hooks": [] }
+```
+
+Lets install some hooks, so hooks are stored outside the hooked repository as they are on a per user basis. lets create a git_hooks directory:
+
+```
+$ mkdir /tmp/git_hooks
+$ cd /tmp/git_hooks
+```
+
+And lets make a python hook to demonstrate:
+
+```
+$ cat - > new_hook.py
+def precommit(git_state):
+    for fname in git_state["files"]:
+        if "action" in fname:
+            print "ARGGGGGHHHHHH"
+            return False
+    return True
+```
+
+This simply shouts if the word action is in the filename. Lets inject this into our git repo hooks. we can inject a directory or just a file. If you use a directory it will pull out all python files from the directory and all hooks that are copied will be turned on by default.
+
+```
+$ python hooked.py --git-root=/tmp/testgit --inject=/tmp/git_hooks/new_hook.py
+```
+
+Now lets look at the action folder and the contents of config.json:
+
+```
+$ ls .git/hooks/action/
+config.json  __init__.py  new_hook.py  other_hook.py  test_hook.py
+$ cat .git/hooks/action/config.json 
+{"hooks": ["new_hook"]}
+```
+
+Your hooks have now been installed. If in the future you want to completely remove the usage of hooked.py you can do the following:
+
+```
+$ python hooked.py --git-root=/tmp/testgit --clean
+```
