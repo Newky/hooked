@@ -101,7 +101,9 @@ def inject_file(options):
         config = json.load(action_config_file)
 
     for fname in files:
-        config["hooks"].append(find_file_root(fname))
+        hook_name = find_file_root(fname)
+        if hook_name not in config["hooks"]:
+            config["hooks"].append(hook_name)
 
     with open(action_config_filename, "w") as action_config_file:
         json.dump(config, action_config_file)
